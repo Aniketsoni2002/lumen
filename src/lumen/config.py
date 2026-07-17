@@ -49,7 +49,9 @@ class Settings(BaseSettings):
         default="",
         validation_alias=AliasChoices("GROQ_API_KEY", "LUMEN_GROQ_API_KEY"),
     )
-    groq_model: str = Field(default="llama-3.3-70b-versatile")
+    # qwen on Groq handles Lumen's multi-step tool routing cleanly (llama-3.3
+    # on Groq intermittently returns malformed tool calls). Override freely.
+    groq_model: str = Field(default="qwen/qwen3.6-27b")
 
     # --- Embeddings (local HuggingFace) -----------------------------------
     embedding_model: str = Field(

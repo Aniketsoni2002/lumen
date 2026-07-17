@@ -38,7 +38,7 @@ can put on your resume/LinkedIn.
 ## 4. Try it
 
 Upload a PDF in the sidebar → **Index** → ask questions. The sidebar shows the
-active model (e.g. `groq:llama-3.3-70b-versatile`).
+active model (e.g. `groq:qwen/qwen3.6-27b`).
 
 ## Notes & limits (free tier)
 
