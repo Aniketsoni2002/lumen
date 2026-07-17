@@ -53,10 +53,16 @@ class Settings(BaseSettings):
     # on Groq intermittently returns malformed tool calls). Override freely.
     groq_model: str = Field(default="qwen/qwen3.6-27b")
 
-    # --- Embeddings (local HuggingFace) -----------------------------------
+    # --- Embeddings -------------------------------------------------------
+    # "huggingface" uses sentence-transformers (pulls in PyTorch ~500MB; great
+    # locally). "fastembed" uses an ONNX model — no torch, far lighter — which
+    # is what makes deployment on small cloud containers (Streamlit Cloud) fast
+    # and memory-safe. Cloud deploys default to fastembed via streamlit_app.py.
+    embedding_provider: str = Field(default="huggingface")
     embedding_model: str = Field(
         default="sentence-transformers/all-MiniLM-L6-v2"
     )
+    fastembed_model: str = Field(default="BAAI/bge-small-en-v1.5")
 
     # --- Vector store (local ChromaDB) ------------------------------------
     chroma_dir: Path = Field(default=PROJECT_ROOT / "data" / "chroma")

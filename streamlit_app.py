@@ -27,6 +27,9 @@ try:
     # If a key is present and no provider was explicitly set, prefer Groq.
     if os.environ.get("GROQ_API_KEY") and not os.environ.get("LUMEN_LLM_PROVIDER"):
         os.environ["LUMEN_LLM_PROVIDER"] = "groq"
+    # On the cloud we default embeddings to FastEmbed (no torch) so the
+    # container stays light and boots fast. Override with LUMEN_EMBEDDING_PROVIDER.
+    os.environ.setdefault("LUMEN_EMBEDDING_PROVIDER", "fastembed")
 except Exception:
     # Running outside Streamlit (e.g. import checks) — no secrets to read.
     pass

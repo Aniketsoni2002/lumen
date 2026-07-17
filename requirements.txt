@@ -1,16 +1,17 @@
-# Pinned top-level dependencies. For editable install use: pip install -e ".[dev]"
+# Cloud/deploy dependencies (torch-free — used by Streamlit Community Cloud).
+# Embeddings use FastEmbed (ONNX); the LLM uses Groq. For the fully-local stack
+# with Ollama + HuggingFace embeddings, use: pip install -e ".[local,dev]"
 langchain>=1.0
 langchain-core>=1.0
 langchain-community>=0.4
 langchain-text-splitters>=1.0
 langchain-chroma>=1.0
-langchain-huggingface>=1.0
 langchain-ollama>=1.0
 langchain-groq>=0.2
 langgraph>=1.0
 langgraph-checkpoint-sqlite>=2.0
 chromadb>=0.5
-sentence-transformers>=3.0
+fastembed>=0.3
 pypdf>=4.0
 ddgs>=6.0
 rank-bm25>=0.2.2

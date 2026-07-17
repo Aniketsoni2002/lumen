@@ -1,11 +1,11 @@
-"""ChromaDB vector store + local HuggingFace embeddings."""
+"""ChromaDB vector store + pluggable embeddings (HuggingFace or FastEmbed)."""
 from __future__ import annotations
 
 from functools import lru_cache
 
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_core.embeddings import Embeddings
 
 from lumen.config import get_settings
 from lumen.utils.logging import get_logger
@@ -14,12 +14,33 @@ logger = get_logger("vectorstore")
 
 
 @lru_cache
-def get_embeddings() -> HuggingFaceEmbeddings:
+def get_embeddings() -> Embeddings:
+    """Build the configured embedding backend.
+
+    Imports are lazy so choosing 'fastembed' never imports torch, and vice
+    versa — this keeps cloud containers light.
+    """
     settings = get_settings()
-    logger.info("Loading embedding model: %s", settings.embedding_model)
-    return HuggingFaceEmbeddings(
-        model_name=settings.embedding_model,
-        encode_kwargs={"normalize_embeddings": True},
+    provider = settings.embedding_provider.lower().strip()
+
+    if provider == "fastembed":
+        from langchain_community.embeddings import FastEmbedEmbeddings
+
+        logger.info("Loading FastEmbed model: %s", settings.fastembed_model)
+        return FastEmbedEmbeddings(model_name=settings.fastembed_model)
+
+    if provider == "huggingface":
+        from langchain_huggingface import HuggingFaceEmbeddings
+
+        logger.info("Loading HuggingFace model: %s", settings.embedding_model)
+        return HuggingFaceEmbeddings(
+            model_name=settings.embedding_model,
+            encode_kwargs={"normalize_embeddings": True},
+        )
+
+    raise ValueError(
+        f"Unknown LUMEN_EMBEDDING_PROVIDER={provider!r}. "
+        "Use 'huggingface' or 'fastembed'."
     )
 
 

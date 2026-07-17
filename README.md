@@ -112,8 +112,11 @@ ollama pull qwen2.5:3b
 git clone https://github.com/Aniketsoni2002/lumen.git
 cd lumen
 python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
+pip install -e ".[local,dev]"   # 'local' = HuggingFace embeddings for the fully-local stack
 ```
+
+> **Deploying to the cloud?** See [DEPLOY.md](DEPLOY.md) — Lumen runs on Streamlit
+> Community Cloud using Groq (LLM) + FastEmbed (embeddings), no local install needed.
 
 ### 3. Try it
 
