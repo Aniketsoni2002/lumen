@@ -11,6 +11,7 @@ env/
 
 # Env / secrets
 .env
+.streamlit/secrets.toml
 
 # Data & model artifacts
 data/chroma/

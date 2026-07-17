@@ -10,7 +10,7 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -24,13 +24,32 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    # --- LLM provider -----------------------------------------------------
+    # "ollama" runs a local model (free, private, needs Ollama installed).
+    # "groq"  calls Groq's hosted API (free tier, very fast) — this is what
+    # makes cloud deployment possible, since hosts like Streamlit Cloud can't
+    # run Ollama. Set LUMEN_LLM_PROVIDER=groq and provide GROQ_API_KEY.
+    llm_provider: str = Field(default="ollama")
+
     # --- LLM (local via Ollama) -------------------------------------------
     ollama_base_url: str = Field(default="http://localhost:11434")
-    # qwen2.5 is a strong local tool-calling model — reliable at the multi-step
-    # tool routing this agent needs. Override with any Ollama model that
-    # supports tool calling (e.g. llama3.1, mistral-nemo).
-    llm_model: str = Field(default="qwen2.5:3b")
+    # qwen2.5:7b is a strong local tool-calling model — reliable at the
+    # multi-step tool routing and self-reflection this agent needs, and it
+    # stays coherent across multi-turn conversations. The 3b variant also
+    # works and is lighter, but is more prone to looping on harder chains.
+    # Override with any Ollama model that supports tool calling.
+    llm_model: str = Field(default="qwen2.5:7b")
     llm_temperature: float = Field(default=0.0)
+
+    # --- LLM (cloud via Groq) ---------------------------------------------
+    # Used only when llm_provider == "groq". The API key is read from the
+    # standard GROQ_API_KEY as well as LUMEN_GROQ_API_KEY, so it works with
+    # Groq's own conventions and Streamlit Cloud secrets out of the box.
+    groq_api_key: str = Field(
+        default="",
+        validation_alias=AliasChoices("GROQ_API_KEY", "LUMEN_GROQ_API_KEY"),
+    )
+    groq_model: str = Field(default="llama-3.3-70b-versatile")
 
     # --- Embeddings (local HuggingFace) -----------------------------------
     embedding_model: str = Field(

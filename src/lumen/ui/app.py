@@ -10,6 +10,7 @@ from pathlib import Path
 import streamlit as st
 
 from lumen.agent.graph import run_agent
+from lumen.agent.llm import active_model_name
 from lumen.config import get_settings
 from lumen.core.ingest import ingest_file
 from lumen.core.loader import SUPPORTED_SUFFIXES
@@ -50,7 +51,7 @@ with st.sidebar:
         st.rerun()
 
     st.divider()
-    st.caption(f"LLM: `{settings.llm_model}`")
+    st.caption(f"LLM: `{active_model_name()}`")
     st.caption("Tools: " + ", ".join(f"`{t.name}`" for t in ALL_TOOLS))
 
 # A stable per-browser-session id gives the agent conversation memory, so

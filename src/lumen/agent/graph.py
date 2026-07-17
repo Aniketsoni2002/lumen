@@ -36,12 +36,12 @@ from langchain_core.messages import (
     SystemMessage,
     ToolMessage,
 )
-from langchain_ollama import ChatOllama
 from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 
 from lumen.agent import reflection
+from lumen.agent.llm import build_chat_model
 from lumen.agent.prompts import SYSTEM_PROMPT
 from lumen.config import get_settings
 from lumen.tools import ALL_TOOLS
@@ -90,12 +90,8 @@ _CHECKPOINTER = None
 
 
 def _build_llm(bind_tools: bool = True):
-    settings = get_settings()
-    llm = ChatOllama(
-        model=settings.llm_model,
-        base_url=settings.ollama_base_url,
-        temperature=settings.llm_temperature,
-    )
+    """Build the configured chat model (Ollama or Groq), optionally tool-bound."""
+    llm = build_chat_model()
     return llm.bind_tools(ALL_TOOLS) if bind_tools else llm
 
 

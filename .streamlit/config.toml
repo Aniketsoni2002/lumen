@@ -1,0 +1,10 @@
+[theme]
+primaryColor = "#F5B301"
+base = "light"
+
+[server]
+# Keep uploads modest on the free tier.
+maxUploadSize = 10
+
+[browser]
+gatherUsageStats = false

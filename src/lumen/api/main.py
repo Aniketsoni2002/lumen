@@ -15,6 +15,7 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 
 from lumen.agent.graph import run_agent, stream_agent
+from lumen.agent.llm import active_model_name
 from lumen.api.schemas import (
     AskRequest,
     AskResponse,
@@ -40,10 +41,9 @@ app = FastAPI(
 
 @app.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
-    settings = get_settings()
     return HealthResponse(
         status="ok",
-        llm_model=settings.llm_model,
+        llm_model=active_model_name(),
         tools=[t.name for t in ALL_TOOLS],
     )
 
