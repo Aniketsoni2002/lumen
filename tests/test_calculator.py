@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from agentrag.tools.calculator import CalculatorError, calculator, safe_eval
+from lumen.tools.calculator import CalculatorError, calculator, safe_eval
 
 
 @pytest.mark.parametrize(

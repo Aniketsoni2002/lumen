@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from agentrag.config import get_settings
-from agentrag.core.vectorstore import get_vectorstore
-from agentrag.utils.logging import get_logger
+from lumen.config import get_settings
+from lumen.core.vectorstore import get_vectorstore
+from lumen.utils.logging import get_logger
 
 logger = get_logger("tool.retrieval")
 
@@ -19,7 +19,7 @@ def _retrieve(query: str):
     """Return the most relevant chunks, using hybrid retrieval if enabled."""
     settings = get_settings()
     if settings.hybrid_retrieval:
-        from agentrag.core.hybrid import HybridRetriever
+        from lumen.core.hybrid import HybridRetriever
 
         return HybridRetriever(
             dense_weight=settings.hybrid_dense_weight,

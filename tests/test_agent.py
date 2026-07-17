@@ -9,8 +9,8 @@ from __future__ import annotations
 import pytest
 from langchain_core.messages import AIMessage
 
-from agentrag import config
-from agentrag.agent import graph
+from lumen import config
+from lumen.agent import graph
 
 
 @pytest.fixture(autouse=True)
@@ -19,7 +19,7 @@ def _clear_settings(tmp_path, monkeypatch):
     config.get_settings.cache_clear()
     # Point conversation memory at a throwaway SQLite file per test, and reset
     # the cached checkpointer so it is rebuilt against that path.
-    monkeypatch.setenv("AGENTRAG_MEMORY_DB", str(tmp_path / "mem.sqlite"))
+    monkeypatch.setenv("LUMEN_MEMORY_DB", str(tmp_path / "mem.sqlite"))
     graph._CHECKPOINTER = None
     yield
     graph._CHECKPOINTER = None
@@ -63,7 +63,7 @@ def _patch_llm(monkeypatch, scripted):
 
 
 def test_agent_uses_tool_then_answers(monkeypatch):
-    monkeypatch.setenv("AGENTRAG_ENABLE_REFLECTION", "false")
+    monkeypatch.setenv("LUMEN_ENABLE_REFLECTION", "false")
     scripted = _ScriptedLLM([_calc_call("6 * 7"), AIMessage(content="It is 42.")])
     _patch_llm(monkeypatch, scripted)
 
@@ -75,7 +75,7 @@ def test_agent_uses_tool_then_answers(monkeypatch):
 
 
 def test_agent_answers_without_tools(monkeypatch):
-    monkeypatch.setenv("AGENTRAG_ENABLE_REFLECTION", "false")
+    monkeypatch.setenv("LUMEN_ENABLE_REFLECTION", "false")
     scripted = _ScriptedLLM([AIMessage(content="Hello! How can I help?")])
     _patch_llm(monkeypatch, scripted)
 
@@ -87,8 +87,8 @@ def test_agent_answers_without_tools(monkeypatch):
 
 
 def test_agent_respects_step_cap(monkeypatch):
-    monkeypatch.setenv("AGENTRAG_ENABLE_REFLECTION", "false")
-    monkeypatch.setenv("AGENTRAG_MAX_AGENT_STEPS", "3")
+    monkeypatch.setenv("LUMEN_ENABLE_REFLECTION", "false")
+    monkeypatch.setenv("LUMEN_MAX_AGENT_STEPS", "3")
 
     class _LoopingLLM:
         def invoke(self, _messages):
@@ -104,7 +104,7 @@ def test_agent_respects_step_cap(monkeypatch):
 
 def test_reflection_grounded_passes_through(monkeypatch):
     # Reflection ON; grader returns GROUNDED, so the answer is returned as-is.
-    monkeypatch.setenv("AGENTRAG_ENABLE_REFLECTION", "true")
+    monkeypatch.setenv("LUMEN_ENABLE_REFLECTION", "true")
     scripted = _ScriptedLLM([AIMessage(content="The capital is Paris.")])
     _patch_llm(monkeypatch, scripted)
 
@@ -115,7 +115,7 @@ def test_reflection_grounded_passes_through(monkeypatch):
 
 
 def test_reflection_ungrounded_triggers_one_retry(monkeypatch):
-    monkeypatch.setenv("AGENTRAG_ENABLE_REFLECTION", "true")
+    monkeypatch.setenv("LUMEN_ENABLE_REFLECTION", "true")
 
     class _GraderThenFix:
         """First answer is judged UNGROUNDED; the agent then corrects it."""
@@ -145,7 +145,7 @@ def test_reflection_ungrounded_triggers_one_retry(monkeypatch):
 
 
 def test_memory_preserves_turns_across_calls(monkeypatch):
-    monkeypatch.setenv("AGENTRAG_ENABLE_REFLECTION", "false")
+    monkeypatch.setenv("LUMEN_ENABLE_REFLECTION", "false")
 
     class _EchoLLM:
         """Answers, and on the 2nd turn can 'see' the earlier human message."""

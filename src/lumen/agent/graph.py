@@ -41,11 +41,11 @@ from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 
-from agentrag.agent import reflection
-from agentrag.agent.prompts import SYSTEM_PROMPT
-from agentrag.config import get_settings
-from agentrag.tools import ALL_TOOLS
-from agentrag.utils.logging import get_logger
+from lumen.agent import reflection
+from lumen.agent.prompts import SYSTEM_PROMPT
+from lumen.config import get_settings
+from lumen.tools import ALL_TOOLS
+from lumen.utils.logging import get_logger
 
 logger = get_logger("agent")
 

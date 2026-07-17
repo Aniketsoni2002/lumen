@@ -17,9 +17,9 @@ def get_logger(name: str) -> logging.Logger:
                 datefmt="%H:%M:%S",
             )
         )
-        root = logging.getLogger("agentrag")
+        root = logging.getLogger("lumen")
         root.setLevel(logging.INFO)
         root.addHandler(handler)
         root.propagate = False
         _CONFIGURED = True
-    return logging.getLogger(f"agentrag.{name}")
+    return logging.getLogger(f"lumen.{name}")

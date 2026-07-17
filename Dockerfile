@@ -1,5 +1,5 @@
-# AgentRAG API container. Ollama runs on the host or a sibling container;
-# point AGENTRAG_OLLAMA_BASE_URL at it.
+# Lumen API container. Ollama runs on the host or a sibling container;
+# point LUMEN_OLLAMA_BASE_URL at it.
 FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1 \
@@ -13,4 +13,4 @@ RUN pip install --upgrade pip && pip install -e .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "agentrag.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "lumen.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

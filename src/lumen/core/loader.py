@@ -11,8 +11,8 @@ from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from agentrag.config import get_settings
-from agentrag.utils.logging import get_logger
+from lumen.config import get_settings
+from lumen.utils.logging import get_logger
 
 logger = get_logger("loader")
 

@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from agentrag.config import get_settings
-from agentrag.utils.logging import get_logger
+from lumen.config import get_settings
+from lumen.utils.logging import get_logger
 
 logger = get_logger("tool.websearch")
 

@@ -1,8 +1,8 @@
 """Tests for the CLI entry point (agent/ingest mocked)."""
 from __future__ import annotations
 
-from agentrag import cli
-from agentrag.agent.graph import AgentResult
+from lumen import cli
+from lumen.agent.graph import AgentResult
 
 
 def test_cli_ask_prints_answer_and_trace(monkeypatch, capsys):

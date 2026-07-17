@@ -1,16 +1,16 @@
 <div align="center">
 
-# 🤖 AgentRAG
+# 🤖 Lumen
 
 ### An agentic RAG system — the LLM decides *when* to retrieve, search the web, or compute.
 
-Unlike a classic RAG pipeline that blindly retrieves on every query, **AgentRAG**
+Unlike a classic RAG pipeline that blindly retrieves on every query, **Lumen**
 gives an LLM a toolbelt and lets it *reason* about which tool to use: your private
 documents, a live web search, or an exact calculator — looping through multiple
 steps until it can answer. Built on **LangGraph**, running **100% locally and free**
 (Ollama + HuggingFace + ChromaDB + DuckDuckGo). No API key.
 
-[![CI](https://github.com/Aniketsoni2002/agentrag/actions/workflows/ci.yml/badge.svg)](https://github.com/Aniketsoni2002/agentrag/actions/workflows/ci.yml)
+[![CI](https://github.com/Aniketsoni2002/lumen/actions/workflows/ci.yml/badge.svg)](https://github.com/Aniketsoni2002/lumen/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Built with LangGraph](https://img.shields.io/badge/built%20with-LangGraph-orange)
@@ -21,7 +21,7 @@ steps until it can answer. Built on **LangGraph**, running **100% locally and fr
 
 ## ✨ What makes this different from "normal" RAG
 
-| Classic RAG | **AgentRAG** |
+| Classic RAG | **Lumen** |
 |---|---|
 | Always retrieves, then answers | Agent **decides** whether to retrieve at all |
 | One retrieval, one shot | **Multi-step** loop — can chain tools, refine, retry |
@@ -94,7 +94,7 @@ Two different tools, chosen and sequenced by the model itself.
 | `core/` | Document loading, chunking, embeddings, vector store, ingestion |
 | `api/main.py` | FastAPI REST service (`/ask`, `/ask/stream` SSE, `/ingest`, `/health`) |
 | `ui/app.py` | Streamlit chat UI with per-session memory + a live tool/reflection trace |
-| `cli.py` | `agentrag ingest / ask [--session] / reset` |
+| `cli.py` | `lumen ingest / ask [--session] / reset` |
 
 ---
 
@@ -109,8 +109,8 @@ ollama pull qwen2.5:3b
 
 ### 2. Install
 ```bash
-git clone https://github.com/Aniketsoni2002/agentrag.git
-cd agentrag
+git clone https://github.com/Aniketsoni2002/lumen.git
+cd lumen
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 ```
@@ -119,12 +119,12 @@ pip install -e ".[dev]"
 
 **CLI** (index the sample notes, then ask multi-tool + memory-aware questions):
 ```bash
-agentrag ingest data/uploads/sample_ml_notes.md
-agentrag ask "What learning rate do the notes recommend, and what is it times 100?"
+lumen ingest data/uploads/sample_ml_notes.md
+lumen ask "What learning rate do the notes recommend, and what is it times 100?"
 
 # Conversation memory — the follow-up remembers the first answer:
-agentrag ask "What is the GPU budget per experiment?" --session demo
-agentrag ask "Multiply that by 3."                     --session demo
+lumen ask "What is the GPU budget per experiment?" --session demo
+lumen ask "Multiply that by 3."                     --session demo
 ```
 
 **Streaming** (watch the agent reason in real time via SSE):
@@ -137,12 +137,12 @@ curl -N -X POST http://localhost:8000/ask/stream \
 
 **Streamlit chat UI** (shows the agent's tool trace live):
 ```bash
-streamlit run src/agentrag/ui/app.py
+streamlit run src/lumen/ui/app.py
 ```
 
 **REST API** (interactive docs at http://localhost:8000/docs):
 ```bash
-uvicorn agentrag.api.main:app --reload
+uvicorn lumen.api.main:app --reload
 ```
 
 ---
@@ -161,19 +161,19 @@ Override any setting via env vars or a `.env` file (see [`.env.example`](.env.ex
 
 | Variable | Default | Description |
 |---|---|---|
-| `AGENTRAG_LLM_MODEL` | `qwen2.5:3b` | Ollama model (must support tool calling) |
-| `AGENTRAG_MAX_AGENT_STEPS` | `6` | Hard cap on reasoning/tool turns |
-| `AGENTRAG_WEB_RESULTS` | `4` | Web results returned per search |
-| `AGENTRAG_TOP_K` | `4` | Chunks retrieved from the knowledge base |
-| `AGENTRAG_HYBRID_RETRIEVAL` | `true` | Fuse dense + BM25 retrieval |
-| `AGENTRAG_ENABLE_REFLECTION` | `true` | Grade answers and self-correct once |
-| `AGENTRAG_MEMORY_DB` | `data/memory.sqlite` | Conversation-memory store |
+| `LUMEN_LLM_MODEL` | `qwen2.5:3b` | Ollama model (must support tool calling) |
+| `LUMEN_MAX_AGENT_STEPS` | `6` | Hard cap on reasoning/tool turns |
+| `LUMEN_WEB_RESULTS` | `4` | Web results returned per search |
+| `LUMEN_TOP_K` | `4` | Chunks retrieved from the knowledge base |
+| `LUMEN_HYBRID_RETRIEVAL` | `true` | Fuse dense + BM25 retrieval |
+| `LUMEN_ENABLE_REFLECTION` | `true` | Grade answers and self-correct once |
+| `LUMEN_MEMORY_DB` | `data/memory.sqlite` | Conversation-memory store |
 
 > **A note on model choice:** agentic tool-routing needs a model that's good at
 > function calling. The default `qwen2.5:3b` handles multi-step tool chains
 > reliably even at 3B params. Smaller/weaker models (e.g. `llama3.2:3b`) work for
 > single-tool questions but are less reliable at chaining tools — swap in a larger
-> model via `AGENTRAG_LLM_MODEL` for the most robust behaviour.
+> model via `LUMEN_LLM_MODEL` for the most robust behaviour.
 
 ---
 

@@ -12,7 +12,7 @@ import operator
 
 from langchain_core.tools import tool
 
-from agentrag.utils.logging import get_logger
+from lumen.utils.logging import get_logger
 
 logger = get_logger("tool.calculator")
 

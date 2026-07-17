@@ -22,9 +22,9 @@ from dataclasses import dataclass
 from langchain_community.retrievers import BM25Retriever
 from langchain_core.documents import Document
 
-from agentrag.config import get_settings
-from agentrag.core.vectorstore import get_vectorstore
-from agentrag.utils.logging import get_logger
+from lumen.config import get_settings
+from lumen.core.vectorstore import get_vectorstore
+from lumen.utils.logging import get_logger
 
 logger = get_logger("hybrid")
 

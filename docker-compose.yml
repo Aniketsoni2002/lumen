@@ -11,7 +11,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      AGENTRAG_OLLAMA_BASE_URL: http://ollama:11434
+      LUMEN_OLLAMA_BASE_URL: http://ollama:11434
     volumes:
       - ./data:/app/data
     depends_on:

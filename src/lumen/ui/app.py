@@ -1,6 +1,6 @@
-"""Streamlit UI for AgentRAG — chat + a live view of the agent's tool use.
+"""Streamlit UI for Lumen — chat + a live view of the agent's tool use.
 
-Run with:  streamlit run src/agentrag/ui/app.py
+Run with:  streamlit run src/lumen/ui/app.py
 """
 from __future__ import annotations
 
@@ -9,17 +9,17 @@ from pathlib import Path
 
 import streamlit as st
 
-from agentrag.agent.graph import run_agent
-from agentrag.config import get_settings
-from agentrag.core.ingest import ingest_file
-from agentrag.core.loader import SUPPORTED_SUFFIXES
-from agentrag.core.vectorstore import clear_collection
-from agentrag.tools import ALL_TOOLS
+from lumen.agent.graph import run_agent
+from lumen.config import get_settings
+from lumen.core.ingest import ingest_file
+from lumen.core.loader import SUPPORTED_SUFFIXES
+from lumen.core.vectorstore import clear_collection
+from lumen.tools import ALL_TOOLS
 
-st.set_page_config(page_title="AgentRAG", page_icon="🤖", layout="centered")
+st.set_page_config(page_title="Lumen", page_icon="🤖", layout="centered")
 settings = get_settings()
 
-st.title("🤖 AgentRAG")
+st.title("🤖 Lumen")
 st.caption(
     "An agent that decides when to search your documents, the web, or compute — "
     "100% local & free."

@@ -3,9 +3,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from agentrag.core.loader import load_and_split
-from agentrag.core.vectorstore import add_documents
-from agentrag.utils.logging import get_logger
+from lumen.core.loader import load_and_split
+from lumen.core.vectorstore import add_documents
+from lumen.utils.logging import get_logger
 
 logger = get_logger("ingest")
 

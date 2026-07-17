@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from langchain_core.messages import AnyMessage, HumanMessage, ToolMessage
 
-from agentrag.agent.prompts import REFLECTION_PROMPT
-from agentrag.utils.logging import get_logger
+from lumen.agent.prompts import REFLECTION_PROMPT
+from lumen.utils.logging import get_logger
 
 logger = get_logger("reflection")
 

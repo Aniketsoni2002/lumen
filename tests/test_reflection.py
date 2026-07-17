@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
-from agentrag.agent import reflection
+from lumen.agent import reflection
 
 
 def test_parse_grade_grounded():

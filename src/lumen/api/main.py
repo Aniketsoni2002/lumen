@@ -14,24 +14,24 @@ from pathlib import Path
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 
-from agentrag.agent.graph import run_agent, stream_agent
-from agentrag.api.schemas import (
+from lumen.agent.graph import run_agent, stream_agent
+from lumen.api.schemas import (
     AskRequest,
     AskResponse,
     HealthResponse,
     IngestResponse,
 )
-from agentrag.config import get_settings
-from agentrag.core.ingest import ingest_file
-from agentrag.core.loader import SUPPORTED_SUFFIXES, UnsupportedFileError
-from agentrag.core.vectorstore import clear_collection
-from agentrag.tools import ALL_TOOLS
-from agentrag.utils.logging import get_logger
+from lumen.config import get_settings
+from lumen.core.ingest import ingest_file
+from lumen.core.loader import SUPPORTED_SUFFIXES, UnsupportedFileError
+from lumen.core.vectorstore import clear_collection
+from lumen.tools import ALL_TOOLS
+from lumen.utils.logging import get_logger
 
 logger = get_logger("api")
 
 app = FastAPI(
-    title="AgentRAG API",
+    title="Lumen API",
     description="Agentic Retrieval-Augmented Generation: an LLM agent that "
     "decides when to search your documents, the web, or compute.",
     version="1.0.0",

@@ -7,8 +7,8 @@ from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
 
-from agentrag.config import get_settings
-from agentrag.utils.logging import get_logger
+from lumen.config import get_settings
+from lumen.utils.logging import get_logger
 
 logger = get_logger("vectorstore")
 

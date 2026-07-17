@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from langchain_core.documents import Document
 
-from agentrag.tools import retrieval, websearch
+from lumen.tools import retrieval, websearch
 
 
 def test_search_documents_formats_sources(monkeypatch):
@@ -27,10 +27,10 @@ def test_search_documents_handles_empty(monkeypatch):
 
 def test_retrieve_uses_hybrid_when_enabled(monkeypatch):
     """Verify the dense-vs-hybrid routing decision itself."""
-    from agentrag import config
+    from lumen import config
 
     config.get_settings.cache_clear()
-    monkeypatch.setenv("AGENTRAG_HYBRID_RETRIEVAL", "true")
+    monkeypatch.setenv("LUMEN_HYBRID_RETRIEVAL", "true")
 
     called = {}
 
@@ -42,7 +42,7 @@ def test_retrieve_uses_hybrid_when_enabled(monkeypatch):
             called["retrieved"] = query
             return [Document(page_content="hybrid hit", metadata={})]
 
-    import agentrag.core.hybrid as hybrid_mod
+    import lumen.core.hybrid as hybrid_mod
 
     monkeypatch.setattr(hybrid_mod, "HybridRetriever", _FakeHybrid)
     out = retrieval._retrieve("q")

@@ -1,7 +1,7 @@
 """Prompts for the agent and the self-reflection grader."""
 from __future__ import annotations
 
-SYSTEM_PROMPT = """You are AgentRAG, a research assistant that answers questions \
+SYSTEM_PROMPT = """You are Lumen, a research assistant that answers questions \
 by reasoning step by step and using tools.
 
 You have these tools:

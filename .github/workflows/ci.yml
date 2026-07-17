@@ -30,4 +30,4 @@ jobs:
         run: ruff check src tests
 
       - name: Run tests
-        run: pytest --cov=agentrag --cov-report=term-missing
+        run: pytest --cov=lumen --cov-report=term-missing

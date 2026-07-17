@@ -1,6 +1,6 @@
-"""Central configuration for AgentRAG.
+"""Central configuration for Lumen.
 
-Everything is overridable via environment variables (prefix ``AGENTRAG_``) or a
+Everything is overridable via environment variables (prefix ``LUMEN_``) or a
 ``.env`` file, so the same code runs locally, in Docker and in CI. Defaults
 target a fully local, free stack: Ollama for the LLM, HuggingFace for
 embeddings, ChromaDB for vectors, and DuckDuckGo for web search (no API key).
@@ -18,7 +18,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_prefix="AGENTRAG_",
+        env_prefix="LUMEN_",
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
@@ -39,7 +39,7 @@ class Settings(BaseSettings):
 
     # --- Vector store (local ChromaDB) ------------------------------------
     chroma_dir: Path = Field(default=PROJECT_ROOT / "data" / "chroma")
-    collection_name: str = Field(default="agentrag")
+    collection_name: str = Field(default="lumen")
 
     # --- Chunking / retrieval ---------------------------------------------
     chunk_size: int = Field(default=1000)

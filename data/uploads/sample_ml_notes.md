@@ -1,6 +1,6 @@
 # Machine Learning Study Notes (Sample)
 
-A sample knowledge base you can index to try AgentRAG immediately.
+A sample knowledge base you can index to try Lumen immediately.
 
 ## Gradient Descent
 

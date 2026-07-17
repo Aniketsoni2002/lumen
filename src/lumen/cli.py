@@ -1,21 +1,21 @@
-"""Command-line interface for AgentRAG.
+"""Command-line interface for Lumen.
 
-    agentrag ingest data/uploads/handbook.pdf
-    agentrag ask "What is the refund policy, and what is 20% of 30 days?"
-    agentrag reset
+    lumen ingest data/uploads/handbook.pdf
+    lumen ask "What is the refund policy, and what is 20% of 30 days?"
+    lumen reset
 """
 from __future__ import annotations
 
 import argparse
 import sys
 
-from agentrag.agent.graph import run_agent
-from agentrag.core.ingest import ingest_file
-from agentrag.core.vectorstore import clear_collection
+from lumen.agent.graph import run_agent
+from lumen.core.ingest import ingest_file
+from lumen.core.vectorstore import clear_collection
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="agentrag", description=__doc__)
+    parser = argparse.ArgumentParser(prog="lumen", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_ingest = sub.add_parser("ingest", help="Index a document.")

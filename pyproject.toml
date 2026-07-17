@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "agentrag"
+name = "lumen"
 version = "1.0.0"
 description = "Agentic RAG: an LLM agent that decides when to search your documents, the web, or compute — fully local (Ollama + LangGraph + ChromaDB)."
 readme = "README.md"
@@ -47,11 +47,11 @@ dev = [
 ]
 
 [project.scripts]
-agentrag = "agentrag.cli:main"
+lumen = "lumen.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/Aniketsoni2002/agentrag"
-Repository = "https://github.com/Aniketsoni2002/agentrag"
+Homepage = "https://github.com/Aniketsoni2002/lumen"
+Repository = "https://github.com/Aniketsoni2002/lumen"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -5,8 +5,8 @@ import io
 
 from fastapi.testclient import TestClient
 
-from agentrag.agent.graph import AgentResult
-from agentrag.api import main
+from lumen.agent.graph import AgentResult
+from lumen.api import main
 
 
 def _client() -> TestClient:
@@ -84,10 +84,10 @@ def test_ingest_rejects_unsupported_type():
 
 
 def test_ingest_indexes_supported_file(monkeypatch, tmp_path):
-    from agentrag import config
+    from lumen import config
 
     config.get_settings.cache_clear()
-    monkeypatch.setenv("AGENTRAG_UPLOAD_DIR", str(tmp_path))
+    monkeypatch.setenv("LUMEN_UPLOAD_DIR", str(tmp_path))
     monkeypatch.setattr(main, "ingest_file", lambda path: 5)
 
     files = {"file": ("notes.txt", io.BytesIO(b"hello"), "text/plain")}

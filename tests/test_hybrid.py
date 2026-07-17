@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from langchain_core.documents import Document
 
-from agentrag.core import hybrid
-from agentrag.core.hybrid import reciprocal_rank_fusion
+from lumen.core import hybrid
+from lumen.core.hybrid import reciprocal_rank_fusion
 
 
 def _doc(text, source="s", start=0):
