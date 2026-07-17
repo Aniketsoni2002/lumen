@@ -26,7 +26,9 @@ def test_ask_returns_answer_and_trace(monkeypatch):
     monkeypatch.setattr(
         main,
         "run_agent",
-        lambda q: AgentResult(answer="42", tool_calls=["calculator"], steps=2),
+        lambda q, thread_id=None: AgentResult(
+            answer="42", tool_calls=["calculator"], steps=2, reflections=1
+        ),
     )
     resp = _client().post("/ask", json={"question": "6*7?"})
     assert resp.status_code == 200
@@ -34,7 +36,40 @@ def test_ask_returns_answer_and_trace(monkeypatch):
         "answer": "42",
         "tools_used": ["calculator"],
         "steps": 2,
+        "reflections": 1,
     }
+
+
+def test_ask_passes_session_id_for_memory(monkeypatch):
+    seen = {}
+
+    def _fake(q, thread_id=None):
+        seen["thread_id"] = thread_id
+        return AgentResult(answer="ok", tool_calls=[], steps=1)
+
+    monkeypatch.setattr(main, "run_agent", _fake)
+    _client().post("/ask", json={"question": "hi", "session_id": "abc-123"})
+    assert seen["thread_id"] == "abc-123"
+
+
+def test_ask_stream_emits_sse_events(monkeypatch):
+    def _fake_stream(q, thread_id=None):
+        yield {"type": "step", "node": "agent"}
+        yield {"type": "tool", "name": "calculator"}
+        yield {
+            "type": "final",
+            "result": AgentResult(
+                answer="42", tool_calls=["calculator"], steps=2, reflections=0
+            ),
+        }
+
+    monkeypatch.setattr(main, "stream_agent", _fake_stream)
+    resp = _client().post("/ask/stream", json={"question": "6*7?"})
+    assert resp.status_code == 200
+    body = resp.text
+    assert "data:" in body
+    assert '"type": "tool"' in body
+    assert '"answer": "42"' in body  # final frame carries the answer
 
 
 def test_ask_rejects_empty_question():

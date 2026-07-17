@@ -15,13 +15,24 @@ from agentrag.utils.logging import get_logger
 logger = get_logger("tool.retrieval")
 
 
+def _retrieve(query: str):
+    """Return the most relevant chunks, using hybrid retrieval if enabled."""
+    settings = get_settings()
+    if settings.hybrid_retrieval:
+        from agentrag.core.hybrid import HybridRetriever
+
+        return HybridRetriever(
+            dense_weight=settings.hybrid_dense_weight,
+            sparse_weight=settings.hybrid_sparse_weight,
+        ).retrieve(query, top_k=settings.top_k)
+    return get_vectorstore().as_retriever(
+        search_kwargs={"k": settings.top_k}
+    ).invoke(query)
+
+
 def _search_knowledge_base(query: str) -> str:
     """Core retrieval logic, separated so it is easy to unit-test."""
-    settings = get_settings()
-    retriever = get_vectorstore().as_retriever(
-        search_kwargs={"k": settings.top_k}
-    )
-    docs = retriever.invoke(query)
+    docs = _retrieve(query)
     if not docs:
         return "NO_RESULTS: The knowledge base returned nothing for this query."
 

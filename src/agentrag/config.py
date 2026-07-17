@@ -46,14 +46,27 @@ class Settings(BaseSettings):
     chunk_overlap: int = Field(default=150)
     top_k: int = Field(default=4)
 
+    # Hybrid retrieval: fuse dense (semantic) + sparse (BM25 keyword) search.
+    # Weights are relative; they need not sum to 1.
+    hybrid_retrieval: bool = Field(default=True)
+    hybrid_dense_weight: float = Field(default=0.5)
+    hybrid_sparse_weight: float = Field(default=0.5)
+
     # --- Agent ------------------------------------------------------------
     # Hard cap on reasoning steps so a confused agent can never loop forever.
     max_agent_steps: int = Field(default=6)
     # How many web results the search tool returns per call.
     web_results: int = Field(default=4)
+    # Self-reflection: grade the answer against gathered evidence; on an
+    # UNGROUNDED verdict, give the agent one chance to correct itself.
+    enable_reflection: bool = Field(default=True)
 
     # --- Storage ----------------------------------------------------------
     upload_dir: Path = Field(default=PROJECT_ROOT / "data" / "uploads")
+    # SQLite file backing conversation memory. Persisting to disk means a
+    # session's history survives across separate CLI invocations and API
+    # restarts, not just within one process.
+    memory_db: Path = Field(default=PROJECT_ROOT / "data" / "memory.sqlite")
 
     def ensure_dirs(self) -> None:
         self.chroma_dir.mkdir(parents=True, exist_ok=True)

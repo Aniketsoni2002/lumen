@@ -7,12 +7,14 @@ DELETE /documents -> clear the knowledge base
 """
 from __future__ import annotations
 
+import json
 import shutil
 from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.responses import StreamingResponse
 
-from agentrag.agent.graph import run_agent
+from agentrag.agent.graph import run_agent, stream_agent
 from agentrag.api.schemas import (
     AskRequest,
     AskResponse,
@@ -75,12 +77,37 @@ async def ingest(file: UploadFile = File(...)) -> IngestResponse:
 
 @app.post("/ask", response_model=AskResponse)
 def ask(req: AskRequest) -> AskResponse:
-    result = run_agent(req.question)
+    result = run_agent(req.question, thread_id=req.session_id)
     return AskResponse(
         answer=result.answer,
         tools_used=result.tool_calls,
         steps=result.steps,
+        reflections=result.reflections,
     )
+
+
+@app.post("/ask/stream")
+def ask_stream(req: AskRequest) -> StreamingResponse:
+    """Stream the agent's progress as Server-Sent Events (SSE).
+
+    Emits one ``data: {json}\\n\\n`` frame per event (step / tool / reflection /
+    final). Consume with any SSE client or ``curl -N``.
+    """
+
+    def event_source():
+        for event in stream_agent(req.question, thread_id=req.session_id):
+            payload = dict(event)
+            if payload.get("type") == "final":
+                result = payload.pop("result")
+                payload.update(
+                    answer=result.answer,
+                    tools_used=result.tool_calls,
+                    steps=result.steps,
+                    reflections=result.reflections,
+                )
+            yield f"data: {json.dumps(payload)}\n\n"
+
+    return StreamingResponse(event_source(), media_type="text/event-stream")
 
 
 @app.delete("/documents", status_code=204)

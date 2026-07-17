@@ -23,6 +23,11 @@ def _build_parser() -> argparse.ArgumentParser:
 
     p_ask = sub.add_parser("ask", help="Ask the agent a question.")
     p_ask.add_argument("question", help="Your question, in quotes.")
+    p_ask.add_argument(
+        "--session",
+        default=None,
+        help="Session id for conversation memory across multiple 'ask' calls.",
+    )
 
     sub.add_parser("reset", help="Clear the knowledge base.")
     return parser
@@ -35,11 +40,15 @@ def main(argv: list[str] | None = None) -> int:
         n = ingest_file(args.path)
         print(f"Indexed {n} chunks from {args.path}")
     elif args.command == "ask":
-        result = run_agent(args.question)
+        result = run_agent(args.question, thread_id=args.session)
         print(result.answer)
+        trace = []
         if result.tool_calls:
-            print(f"\n[tools used: {', '.join(result.tool_calls)} | "
-                  f"steps: {result.steps}]")
+            trace.append(f"tools used: {', '.join(result.tool_calls)}")
+        trace.append(f"steps: {result.steps}")
+        if result.reflections:
+            trace.append(f"self-corrections: {result.reflections}")
+        print(f"\n[{' | '.join(trace)}]")
     elif args.command == "reset":
         clear_collection()
         print("Knowledge base cleared.")

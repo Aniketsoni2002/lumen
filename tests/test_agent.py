@@ -1,58 +1,83 @@
-"""Tests for the LangGraph agent loop with a scripted fake LLM.
+"""Tests for the LangGraph agent loop with scripted fake LLMs.
 
-We replace the bound LLM with a fake that first asks for the calculator tool,
-then (after seeing the tool result) returns a final answer. This exercises the
-full graph: agent -> tools -> agent -> END, the step counter, and the
-answer/trace extraction — all without Ollama.
+The fakes let us exercise the full graph — agent -> tools -> agent -> reflection
+-> END — including the step cap, the self-reflection grader, and multi-turn
+memory, all without Ollama.
 """
 from __future__ import annotations
 
+import pytest
 from langchain_core.messages import AIMessage
 
+from agentrag import config
 from agentrag.agent import graph
 
 
+@pytest.fixture(autouse=True)
+def _clear_settings(tmp_path, monkeypatch):
+    """Every test starts from clean settings and an isolated memory DB."""
+    config.get_settings.cache_clear()
+    # Point conversation memory at a throwaway SQLite file per test, and reset
+    # the cached checkpointer so it is rebuilt against that path.
+    monkeypatch.setenv("AGENTRAG_MEMORY_DB", str(tmp_path / "mem.sqlite"))
+    graph._CHECKPOINTER = None
+    yield
+    graph._CHECKPOINTER = None
+    config.get_settings.cache_clear()
+
+
+def _calc_call(expr: str, call_id: str = "c1") -> AIMessage:
+    return AIMessage(
+        content="",
+        tool_calls=[
+            {"name": "calculator", "args": {"expression": expr},
+             "id": call_id, "type": "tool_call"}
+        ],
+    )
+
+
 class _ScriptedLLM:
-    """Returns a tool-calling message first, then a plain answer."""
+    """Yields a scripted sequence of responses across successive .invoke calls.
 
-    def __init__(self):
-        self.calls = 0
+    ``bind_tools`` is accepted (and ignored) so it matches the real signature;
+    the same object is returned for both the agent and grader roles, and we key
+    the grader response off the prompt content.
+    """
 
-    def invoke(self, _messages):
-        self.calls += 1
-        if self.calls == 1:
-            return AIMessage(
-                content="",
-                tool_calls=[
-                    {
-                        "name": "calculator",
-                        "args": {"expression": "6 * 7"},
-                        "id": "call_1",
-                        "type": "tool_call",
-                    }
-                ],
-            )
-        return AIMessage(content="The answer is 42.")
+    def __init__(self, script):
+        self._script = list(script)
+        self._i = 0
+
+    def invoke(self, messages):
+        # Grader calls include the reflection prompt as a single human message.
+        text = messages[-1].content if messages else ""
+        if isinstance(text, str) and "fact-checking grader" in text:
+            return AIMessage(content="GROUNDED")
+        resp = self._script[min(self._i, len(self._script) - 1)]
+        self._i += 1
+        return resp
+
+
+def _patch_llm(monkeypatch, scripted):
+    monkeypatch.setattr(graph, "_build_llm", lambda bind_tools=True: scripted)
 
 
 def test_agent_uses_tool_then_answers(monkeypatch):
-    scripted = _ScriptedLLM()
-    # _build_llm returns the object the agent node calls .invoke() on.
-    monkeypatch.setattr(graph, "_build_llm", lambda: scripted)
+    monkeypatch.setenv("AGENTRAG_ENABLE_REFLECTION", "false")
+    scripted = _ScriptedLLM([_calc_call("6 * 7"), AIMessage(content="It is 42.")])
+    _patch_llm(monkeypatch, scripted)
 
     result = graph.run_agent("What is 6 times 7?")
 
     assert "42" in result.answer
     assert "calculator" in result.tool_calls
-    assert result.steps >= 2  # at least one tool turn + final answer turn
+    assert result.steps >= 2
 
 
 def test_agent_answers_without_tools(monkeypatch):
-    class _DirectLLM:
-        def invoke(self, _messages):
-            return AIMessage(content="Hello! How can I help?")
-
-    monkeypatch.setattr(graph, "_build_llm", lambda: _DirectLLM())
+    monkeypatch.setenv("AGENTRAG_ENABLE_REFLECTION", "false")
+    scripted = _ScriptedLLM([AIMessage(content="Hello! How can I help?")])
+    _patch_llm(monkeypatch, scripted)
 
     result = graph.run_agent("hi")
 
@@ -62,30 +87,79 @@ def test_agent_answers_without_tools(monkeypatch):
 
 
 def test_agent_respects_step_cap(monkeypatch):
-    # An LLM that NEVER stops asking for a tool would loop forever without a cap.
+    monkeypatch.setenv("AGENTRAG_ENABLE_REFLECTION", "false")
+    monkeypatch.setenv("AGENTRAG_MAX_AGENT_STEPS", "3")
+
     class _LoopingLLM:
         def invoke(self, _messages):
-            return AIMessage(
-                content="",
-                tool_calls=[
-                    {
-                        "name": "calculator",
-                        "args": {"expression": "1 + 1"},
-                        "id": "call_x",
-                        "type": "tool_call",
-                    }
-                ],
-            )
+            return _calc_call("1 + 1", call_id="loop")
 
-    monkeypatch.setattr(graph, "_build_llm", lambda: _LoopingLLM())
-    monkeypatch.setenv("AGENTRAG_MAX_AGENT_STEPS", "3")
-    from agentrag import config
-
-    config.get_settings.cache_clear()
+    monkeypatch.setattr(graph, "_build_llm", lambda bind_tools=True: _LoopingLLM())
 
     result = graph.run_agent("loop forever?")
 
-    # It must terminate (fallback answer) and not exceed the cap by much.
-    assert result.answer  # non-empty
+    assert result.answer
     assert result.steps <= 4
-    config.get_settings.cache_clear()
+
+
+def test_reflection_grounded_passes_through(monkeypatch):
+    # Reflection ON; grader returns GROUNDED, so the answer is returned as-is.
+    monkeypatch.setenv("AGENTRAG_ENABLE_REFLECTION", "true")
+    scripted = _ScriptedLLM([AIMessage(content="The capital is Paris.")])
+    _patch_llm(monkeypatch, scripted)
+
+    result = graph.run_agent("What is the capital of France?")
+
+    assert "Paris" in result.answer
+    assert result.reflections == 0
+
+
+def test_reflection_ungrounded_triggers_one_retry(monkeypatch):
+    monkeypatch.setenv("AGENTRAG_ENABLE_REFLECTION", "true")
+
+    class _GraderThenFix:
+        """First answer is judged UNGROUNDED; the agent then corrects it."""
+
+        def __init__(self):
+            self.answer_turns = 0
+
+        def invoke(self, messages):
+            text = messages[-1].content if messages else ""
+            if isinstance(text, str) and "fact-checking grader" in text:
+                # Ungrounded on the first grading, grounded after.
+                return AIMessage(
+                    content="UNGROUNDED" if self.answer_turns == 1 else "GROUNDED"
+                )
+            self.answer_turns += 1
+            if self.answer_turns == 1:
+                return AIMessage(content="A guessed, unsupported answer.")
+            return AIMessage(content="A corrected, honest answer.")
+
+    grader = _GraderThenFix()
+    monkeypatch.setattr(graph, "_build_llm", lambda bind_tools=True: grader)
+
+    result = graph.run_agent("something tricky")
+
+    assert result.reflections == 1
+    assert "corrected" in result.answer
+
+
+def test_memory_preserves_turns_across_calls(monkeypatch):
+    monkeypatch.setenv("AGENTRAG_ENABLE_REFLECTION", "false")
+
+    class _EchoLLM:
+        """Answers, and on the 2nd turn can 'see' the earlier human message."""
+
+        def invoke(self, messages):
+            human = [m for m in messages if m.__class__.__name__ == "HumanMessage"]
+            return AIMessage(content=f"seen {len(human)} question(s)")
+
+    monkeypatch.setattr(graph, "_build_llm", lambda bind_tools=True: _EchoLLM())
+
+    tid = "test-thread-1"
+    r1 = graph.run_agent("first question", thread_id=tid)
+    r2 = graph.run_agent("second question", thread_id=tid)
+
+    assert "1 question" in r1.answer
+    # Second call must see BOTH questions -> memory persisted across calls.
+    assert "2 question" in r2.answer

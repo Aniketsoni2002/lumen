@@ -4,6 +4,7 @@ Run with:  streamlit run src/agentrag/ui/app.py
 """
 from __future__ import annotations
 
+import uuid
 from pathlib import Path
 
 import streamlit as st
@@ -43,10 +44,19 @@ with st.sidebar:
         clear_collection()
         st.info("Knowledge base cleared.")
 
+    if st.button("💬 New conversation"):
+        st.session_state.session_id = str(uuid.uuid4())
+        st.session_state.messages = []
+        st.rerun()
+
     st.divider()
     st.caption(f"LLM: `{settings.llm_model}`")
     st.caption("Tools: " + ", ".join(f"`{t.name}`" for t in ALL_TOOLS))
 
+# A stable per-browser-session id gives the agent conversation memory, so
+# follow-up questions ("and what about the second one?") work.
+if "session_id" not in st.session_state:
+    st.session_state.session_id = str(uuid.uuid4())
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -61,15 +71,23 @@ if prompt := st.chat_input("Ask anything…"):
 
     with st.chat_message("assistant"):
         with st.spinner("Agent is reasoning…"):
-            result = run_agent(prompt)
+            result = run_agent(prompt, thread_id=st.session_state.session_id)
         st.markdown(result.answer)
-        if result.tool_calls:
-            with st.expander(
-                f"🔎 Agent used {len(result.tool_calls)} tool call(s) "
-                f"in {result.steps} step(s)"
-            ):
+        if result.tool_calls or result.reflections:
+            label = (
+                f"🔎 {len(result.tool_calls)} tool call(s) in "
+                f"{result.steps} step(s)"
+            )
+            if result.reflections:
+                label += f" · {result.reflections} self-correction(s)"
+            with st.expander(label):
                 for i, tc in enumerate(result.tool_calls, start=1):
                     st.write(f"{i}. `{tc}`")
+                if result.reflections:
+                    st.write(
+                        "♻️ The agent re-checked its answer against the "
+                        "evidence and revised it."
+                    )
     st.session_state.messages.append(
         {"role": "assistant", "content": result.answer}
     )

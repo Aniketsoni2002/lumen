@@ -6,37 +6,49 @@ from langchain_core.documents import Document
 from agentrag.tools import retrieval, websearch
 
 
-class _FakeRetriever:
-    def __init__(self, docs):
-        self._docs = docs
-
-    def invoke(self, _query):
-        return self._docs
-
-
-class _FakeStore:
-    def __init__(self, docs):
-        self._docs = docs
-
-    def as_retriever(self, **_kwargs):
-        return _FakeRetriever(self._docs)
-
-
 def test_search_documents_formats_sources(monkeypatch):
+    # Mock the retrieval seam so we test formatting independent of the
+    # dense/hybrid retriever choice.
     docs = [
         Document(page_content="Refunds within 30 days.",
                  metadata={"source": "policy.pdf"}),
     ]
-    monkeypatch.setattr(retrieval, "get_vectorstore", lambda: _FakeStore(docs))
+    monkeypatch.setattr(retrieval, "_retrieve", lambda q: docs)
     out = retrieval._search_knowledge_base("refund")
     assert "policy.pdf" in out
     assert "Refunds within 30 days" in out
 
 
 def test_search_documents_handles_empty(monkeypatch):
-    monkeypatch.setattr(retrieval, "get_vectorstore", lambda: _FakeStore([]))
+    monkeypatch.setattr(retrieval, "_retrieve", lambda q: [])
     out = retrieval._search_knowledge_base("anything")
     assert out.startswith("NO_RESULTS")
+
+
+def test_retrieve_uses_hybrid_when_enabled(monkeypatch):
+    """Verify the dense-vs-hybrid routing decision itself."""
+    from agentrag import config
+
+    config.get_settings.cache_clear()
+    monkeypatch.setenv("AGENTRAG_HYBRID_RETRIEVAL", "true")
+
+    called = {}
+
+    class _FakeHybrid:
+        def __init__(self, **kw):
+            called["constructed"] = True
+
+        def retrieve(self, query, top_k=None):
+            called["retrieved"] = query
+            return [Document(page_content="hybrid hit", metadata={})]
+
+    import agentrag.core.hybrid as hybrid_mod
+
+    monkeypatch.setattr(hybrid_mod, "HybridRetriever", _FakeHybrid)
+    out = retrieval._retrieve("q")
+    assert called.get("constructed") and called.get("retrieved") == "q"
+    assert out[0].page_content == "hybrid hit"
+    config.get_settings.cache_clear()
 
 
 def test_web_search_formats_results(monkeypatch):
