@@ -30,6 +30,13 @@ try:
     # On the cloud we default embeddings to FastEmbed (no torch) so the
     # container stays light and boots fast. Override with LUMEN_EMBEDDING_PROVIDER.
     os.environ.setdefault("LUMEN_EMBEDDING_PROVIDER", "fastembed")
+    # The app's own directory is not reliably writable on managed hosts, and
+    # storage is ephemeral anyway — point ChromaDB and the memory DB at /tmp,
+    # which is always writable. Only do this on the cloud (Groq path).
+    if os.environ.get("LUMEN_LLM_PROVIDER") == "groq":
+        os.environ.setdefault("LUMEN_CHROMA_DIR", "/tmp/lumen/chroma")
+        os.environ.setdefault("LUMEN_UPLOAD_DIR", "/tmp/lumen/uploads")
+        os.environ.setdefault("LUMEN_MEMORY_DB", "/tmp/lumen/memory.sqlite")
 except Exception:
     # Running outside Streamlit (e.g. import checks) — no secrets to read.
     pass
