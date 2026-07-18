@@ -71,9 +71,23 @@ if prompt := st.chat_input("Ask anything…"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        with st.spinner("Agent is reasoning…"):
-            result = run_agent(prompt, thread_id=st.session_state.session_id)
+        try:
+            with st.spinner("Agent is reasoning…"):
+                result = run_agent(
+                    prompt, thread_id=st.session_state.session_id
+                )
+        except Exception as exc:  # surface the real error instead of a blank page
+            import traceback
+
+            st.error(f"The agent hit an error: {exc}")
+            with st.expander("Details"):
+                st.code(traceback.format_exc())
+            st.stop()
+
         st.markdown(result.answer)
+        st.session_state.messages.append(
+            {"role": "assistant", "content": result.answer}
+        )
         if result.tool_calls or result.reflections:
             label = (
                 f"🔎 {len(result.tool_calls)} tool call(s) in "
@@ -89,6 +103,3 @@ if prompt := st.chat_input("Ask anything…"):
                         "♻️ The agent re-checked its answer against the "
                         "evidence and revised it."
                     )
-    st.session_state.messages.append(
-        {"role": "assistant", "content": result.answer}
-    )
