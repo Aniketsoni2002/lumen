@@ -64,25 +64,38 @@ class AgentState(dict):
 
 
 def _get_checkpointer():
-    """Return a persistent SQLite checkpointer for conversation memory.
+    """Return the conversation-memory checkpointer.
 
-    Persisting to disk (rather than an in-memory saver) means a session's
-    history survives across separate CLI runs and API restarts. Cached so the
-    single sqlite connection is reused for the process's lifetime.
+    Two backends, chosen by ``LUMEN_MEMORY_BACKEND``:
+
+    * ``"memory"`` (default) — an in-process saver. Thread-safe, no I/O, and the
+      right choice for the Streamlit UI and cloud deploys, where the app is one
+      long-lived process served across many threads. A shared on-disk SQLite
+      connection there can deadlock across those threads.
+    * ``"sqlite"`` — persists to disk so history survives across *separate*
+      processes (e.g. multiple CLI ``ask`` runs). Best for single-threaded use.
+
+    Cached for the process lifetime.
     """
     global _CHECKPOINTER
     if _CHECKPOINTER is None:
-        import sqlite3
-
-        from langgraph.checkpoint.sqlite import SqliteSaver
-
         settings = get_settings()
-        settings.memory_db.parent.mkdir(parents=True, exist_ok=True)
-        # check_same_thread=False: FastAPI serves requests across threads.
-        conn = sqlite3.connect(
-            str(settings.memory_db), check_same_thread=False
-        )
-        _CHECKPOINTER = SqliteSaver(conn)
+        backend = settings.memory_backend.lower().strip()
+
+        if backend == "sqlite":
+            import sqlite3
+
+            from langgraph.checkpoint.sqlite import SqliteSaver
+
+            settings.memory_db.parent.mkdir(parents=True, exist_ok=True)
+            conn = sqlite3.connect(
+                str(settings.memory_db), check_same_thread=False
+            )
+            _CHECKPOINTER = SqliteSaver(conn)
+        else:
+            from langgraph.checkpoint.memory import MemorySaver
+
+            _CHECKPOINTER = MemorySaver()
     return _CHECKPOINTER
 
 

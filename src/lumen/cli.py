@@ -7,11 +7,18 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 
-from lumen.agent.graph import run_agent
-from lumen.core.ingest import ingest_file
-from lumen.core.vectorstore import clear_collection
+# The CLI runs single-threaded across separate processes, so persistent SQLite
+# memory is both safe and desirable here (it lets --session span multiple runs).
+# Set before importing the graph so the checkpointer picks it up. The UI/cloud
+# keep the default in-process backend, which is thread-safe.
+os.environ.setdefault("LUMEN_MEMORY_BACKEND", "sqlite")
+
+from lumen.agent.graph import run_agent  # noqa: E402
+from lumen.core.ingest import ingest_file  # noqa: E402
+from lumen.core.vectorstore import clear_collection  # noqa: E402
 
 
 def _build_parser() -> argparse.ArgumentParser:

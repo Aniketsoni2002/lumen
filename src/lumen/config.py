@@ -88,12 +88,16 @@ class Settings(BaseSettings):
     # UNGROUNDED verdict, give the agent one chance to correct itself.
     enable_reflection: bool = Field(default=True)
 
+    # --- Conversation memory ----------------------------------------------
+    # "memory": in-process, thread-safe (default; correct for the UI/cloud, one
+    # long-lived process across many threads). "sqlite": persists to disk so
+    # history survives across separate processes (e.g. multiple CLI runs), but
+    # a shared connection is not safe under a multi-threaded server/UI.
+    memory_backend: str = Field(default="memory")
+    memory_db: Path = Field(default=PROJECT_ROOT / "data" / "memory.sqlite")
+
     # --- Storage ----------------------------------------------------------
     upload_dir: Path = Field(default=PROJECT_ROOT / "data" / "uploads")
-    # SQLite file backing conversation memory. Persisting to disk means a
-    # session's history survives across separate CLI invocations and API
-    # restarts, not just within one process.
-    memory_db: Path = Field(default=PROJECT_ROOT / "data" / "memory.sqlite")
 
     def ensure_dirs(self) -> None:
         self.chroma_dir.mkdir(parents=True, exist_ok=True)

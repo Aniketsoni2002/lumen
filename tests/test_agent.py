@@ -17,8 +17,10 @@ from lumen.agent import graph
 def _clear_settings(tmp_path, monkeypatch):
     """Every test starts from clean settings and an isolated memory DB."""
     config.get_settings.cache_clear()
-    # Point conversation memory at a throwaway SQLite file per test, and reset
-    # the cached checkpointer so it is rebuilt against that path.
+    # Use the persistent SQLite backend at a throwaway path so the memory test
+    # exercises real cross-call persistence; reset the cached checkpointer so it
+    # is rebuilt against that path.
+    monkeypatch.setenv("LUMEN_MEMORY_BACKEND", "sqlite")
     monkeypatch.setenv("LUMEN_MEMORY_DB", str(tmp_path / "mem.sqlite"))
     graph._CHECKPOINTER = None
     yield

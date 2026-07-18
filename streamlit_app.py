@@ -36,7 +36,9 @@ try:
     if os.environ.get("LUMEN_LLM_PROVIDER") == "groq":
         os.environ.setdefault("LUMEN_CHROMA_DIR", "/tmp/lumen/chroma")
         os.environ.setdefault("LUMEN_UPLOAD_DIR", "/tmp/lumen/uploads")
-        os.environ.setdefault("LUMEN_MEMORY_DB", "/tmp/lumen/memory.sqlite")
+        # In-process, thread-safe memory: the Streamlit script runs across many
+        # threads, where a shared on-disk SQLite connection can deadlock.
+        os.environ.setdefault("LUMEN_MEMORY_BACKEND", "memory")
 except Exception:
     # Running outside Streamlit (e.g. import checks) — no secrets to read.
     pass
